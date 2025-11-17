@@ -1,3 +1,110 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@layer base {
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+}
+
+:root {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    font-weight: 400;
+    color-scheme: light;
+    color: #373d37;
+    background-color: #fefdfb;
+    --coral-soft: #ff9c80;
+    --coral-light: #ffe6df;
+    --blush: #f48ca3;
+    --peach: #fdbf87;
+    --sage: #6a716a;
+    --cream: #fff9f5;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.font-serif {
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: radial-gradient(circle, #fff6f3, #fffdf8);
+}
+
+.lock-scroll {
+    overflow: hidden !important;
+    height: 100%;
+    touch-action: none;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+input,
+textarea,
+button,
+select {
+    font: inherit;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+::selection {
+    color: #2f3430;
+    background: rgba(244, 140, 163, 0.35);
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #faf4e8;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ffd5cc;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ff8f77;
+}
+
+@supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
+    .backdrop-blur-sm {
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
+
+    .backdrop-blur-lg {
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+    }
+}
