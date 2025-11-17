@@ -202,10 +202,6 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                             loading="eager"
                         />
                         <h2 className="text-3xl font-serif text-[#2e322f]">Entre para o álbum</h2>
-                        <p className="mt-3 text-sm text-[#5a625a]">
-                            Validamos o nome para manter o clima íntimo do evento. Detectamos
-                            registros anteriores automaticamente.
-                        </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="mt-8 flex flex-1 flex-col space-y-5">
