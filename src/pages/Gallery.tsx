@@ -43,7 +43,7 @@ export const Gallery = () => {
 
     const emptyState = (
         <motion.div
-            className="mx-auto flex max-w-2xl flex-col items-center rounded-[32px] border border-white/70 bg-white/80 p-10 text-center shadow-[0_20px_80px_rgba(84,36,23,0.12)] backdrop-blur-xl"
+            className="mx-auto flex max-w-2xl flex-col items-center rounded-4xl border border-white/70 bg-white/80 p-10 text-center shadow-[0_20px_80px_rgba(84,36,23,0.12)] backdrop-blur-xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
         >
@@ -91,11 +91,10 @@ export const Gallery = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                                    activeTab === tab.id
+                                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${activeTab === tab.id
                                         ? 'bg-[#ffede6] text-[#c96a59] shadow'
                                         : 'text-[#8b918b]'
-                                }`}
+                                    }`}
                             >
                                 {tab.label}
                             </button>

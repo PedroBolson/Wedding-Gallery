@@ -27,6 +27,22 @@ import { UserService } from './userService';
 const PHOTOS_COLLECTION = 'photos';
 const STORAGE_PATH = 'wedding-photos';
 
+const getImageDimensions = (file: File): Promise<{ width?: number; height?: number }> => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            resolve({ width: img.naturalWidth, height: img.naturalHeight });
+            URL.revokeObjectURL(url);
+        };
+        img.onerror = () => {
+            resolve({ width: undefined, height: undefined });
+            URL.revokeObjectURL(url);
+        };
+        img.src = url;
+    });
+};
+
 export class PhotoService {
     static async uploadPhoto(
         file: File,
@@ -42,7 +58,7 @@ export class PhotoService {
 
         const storageRef = ref(storage, storagePath);
         const uploadTask = uploadBytesResumable(storageRef, file, {
-            contentType: file.type,
+            contentType: file.type || 'application/octet-stream',
             customMetadata: {
                 uploadedBy: userId,
                 uploaderName: userName,
@@ -64,9 +80,7 @@ export class PhotoService {
                     try {
                         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-                        const img = new Image();
-                        img.src = URL.createObjectURL(file);
-                        await img.decode();
+                        const { width, height } = await getImageDimensions(file);
 
                         const photoData: Photo = {
                             id: photoId,
@@ -77,8 +91,8 @@ export class PhotoService {
                             uploadedAt: new Date(),
                             likes: 0,
                             likedBy: [],
-                            width: img.width,
-                            height: img.height,
+                            width,
+                            height,
                         };
 
                         await setDoc(doc(db, PHOTOS_COLLECTION, photoId), {
@@ -88,7 +102,6 @@ export class PhotoService {
 
                         await UserService.incrementPhotoCount(userId);
 
-                        URL.revokeObjectURL(img.src);
                         resolve(photoData);
                     } catch (error) {
                         reject(error);

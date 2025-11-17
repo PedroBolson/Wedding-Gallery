@@ -23,7 +23,7 @@ export const HeroSection = ({ onUpload, highlightPhotos }: HeroSectionProps) => 
     const featuredPhoto = highlightPhotos[activeHighlight];
 
     return (
-        <section className="relative mx-auto mt-10 max-w-6xl overflow-hidden rounded-[36px] bg-[radial-gradient(circle_at_top,_#fff1ed,_#fff7ef,_#fdfcfa)] p-8 shadow-[0_20px_120px_rgba(255,143,119,0.2)] sm:p-12">
+        <section className="relative mx-auto mt-10 max-w-6xl overflow-hidden rounded-[36px] bg-[radial-gradient(circle_at_top,#fff1ed,#fff7ef,#fdfcfa)] p-8 shadow-[0_20px_120px_rgba(255,143,119,0.2)] sm:p-12">
             <motion.div
                 className="absolute inset-0"
                 initial={{ opacity: 0 }}
@@ -103,7 +103,7 @@ export const HeroSection = ({ onUpload, highlightPhotos }: HeroSectionProps) => 
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ duration: 0.8 }}
                                 />
-                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent p-5 text-white">
+                                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/10 to-transparent p-5 text-white">
                                     <p className="text-sm uppercase tracking-[0.4em] text-white/80">
                                         Em destaque agora
                                     </p>

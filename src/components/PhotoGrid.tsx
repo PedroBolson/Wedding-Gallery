@@ -99,15 +99,15 @@ export const PhotoGrid = ({ photos }: PhotoGridProps) => {
                                     <motion.button
                                         onClick={(e) => handleLike(photo.id, e)}
                                         className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold ${currentUserId && photo.likedBy.includes(currentUserId)
-                                                ? 'bg-white/90 text-[#c9584c]'
-                                                : 'bg-white/30 text-white hover:bg-white/40'
+                                            ? 'bg-white/90 text-[#c9584c]'
+                                            : 'bg-white/30 text-white hover:bg-white/40'
                                             }`}
                                         whileTap={{ scale: 0.95 }}
                                     >
                                         <Heart
                                             className={`h-4 w-4 ${currentUserId && photo.likedBy.includes(currentUserId)
-                                                    ? 'fill-[#c9584c] text-[#c9584c]'
-                                                    : ''
+                                                ? 'fill-[#c9584c] text-[#c9584c]'
+                                                : ''
                                                 }`}
                                         />
                                         {photo.likes}
@@ -137,14 +137,14 @@ export const PhotoGrid = ({ photos }: PhotoGridProps) => {
             <AnimatePresence>
                 {selectedPhoto && (
                     <motion.div
-                        className="fixed inset-0 z-[500] flex items-center justify-center bg-black/35 p-4 backdrop-blur-xl"
+                        className="fixed inset-0 z-500 flex items-center justify-center bg-black/35 p-4 backdrop-blur-xl"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setSelectedPhoto(null)}
                     >
                         <motion.div
-                            className="relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl sm:h-[90vh] sm:rounded-[36px]"
+                            className="relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:h-[90vh] sm:rounded-[36px]"
                             initial={{ scale: 0.92, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
@@ -184,8 +184,8 @@ export const PhotoGrid = ({ photos }: PhotoGridProps) => {
                                 <motion.button
                                     onClick={(e) => handleLike(selectedPhoto.id, e)}
                                     className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold shadow-inner ${currentUserId && selectedPhoto.likedBy.includes(currentUserId)
-                                            ? 'bg-[#fee7e4] text-[#c9584c]'
-                                            : 'bg-[#f7f7f7] text-[#2f3430]'
+                                        ? 'bg-[#fee7e4] text-[#c9584c]'
+                                        : 'bg-[#f7f7f7] text-[#2f3430]'
                                         }`}
                                     whileTap={{ scale: 0.97 }}
                                 >

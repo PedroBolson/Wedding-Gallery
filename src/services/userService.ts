@@ -227,6 +227,10 @@ export class UserService {
     }
 
     private static async findSimilarUsers(normalizedName: string): Promise<User[]> {
+        if (normalizedName.length < 4) {
+            return [];
+        }
+
         const snapshot = await getDocs(collection(db, USERS_COLLECTION));
 
         return snapshot.docs
@@ -234,11 +238,14 @@ export class UserService {
                 user: mapUserData(docItem.id, docItem.data()),
                 normalized: docItem.data().normalizedName || normalizeString(docItem.data().name),
             }))
-            .filter(
-                ({ normalized }) =>
-                    levenshteinDistance(normalizedName, normalized) > 0 &&
-                    levenshteinDistance(normalizedName, normalized) <= 2
-            )
+            .filter(({ normalized }) => {
+                if (normalized === normalizedName) return false;
+                const distance = levenshteinDistance(normalizedName, normalized);
+                if (normalizedName.length <= 6) {
+                    return distance === 1;
+                }
+                return distance <= 1 && Math.abs(normalizedName.length - normalized.length) <= 1;
+            })
             .map(({ user }) => user);
     }
 }

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, CheckCircle2, UploadCloud, X } from 'lucide-react';
 import { PhotoService } from '../services/photoService';
 import { useUserStore } from '../store/userStore';
+import { useToastStore } from './Toast';
 import type { UploadProgress, UserRole } from '../types';
 
 interface PhotoUploadProps {
@@ -15,12 +16,27 @@ export const PhotoUpload = ({ isOpen, onClose }: PhotoUploadProps) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const user = useUserStore((state) => state.user);
+    const addToast = useToastStore((state) => state.addToast);
+
+    const isSupportedImage = (file: File) => {
+        const mime = file.type?.toLowerCase();
+        if (mime && mime.startsWith('image/')) return true;
+        if (!mime) return true;
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        return extension ? ['heic', 'heif', 'dng', 'raw', 'raf', 'jpg', 'jpeg', 'png', 'webp', 'bmp'].includes(extension) : false;
+    };
 
     const handleFileSelect = async (files: FileList | null) => {
         if (!files || !user) return;
         const userRole = (user.role || 'convidado') as UserRole;
 
-        const fileArray = Array.from(files).filter((file) => file.type.startsWith('image/'));
+        const fileArray = Array.from(files).filter(isSupportedImage);
+
+        if (fileArray.length === 0) {
+            addToast('Não conseguimos ler esse formato. Tente exportar a foto ou selecionar outra.', 'error');
+            return;
+        }
+        let hasError = false;
 
         for (const file of fileArray) {
             const uploadId = crypto.randomUUID();
@@ -56,6 +72,7 @@ export const PhotoUpload = ({ isOpen, onClose }: PhotoUploadProps) => {
                     setUploads((prev) => prev.filter((u) => u.id !== uploadId));
                 }, 2200);
             } catch (error) {
+                hasError = true;
                 setUploads((prev) =>
                     prev.map((u) =>
                         u.id === uploadId
@@ -63,7 +80,18 @@ export const PhotoUpload = ({ isOpen, onClose }: PhotoUploadProps) => {
                             : u
                     )
                 );
+                addToast('Não conseguimos enviar algumas fotos. Tente novamente.', 'error');
             }
+        }
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+
+        if (fileArray.length > 0 && !hasError) {
+            setTimeout(() => {
+                onClose();
+            }, 500);
         }
     };
 
@@ -126,7 +154,12 @@ export const PhotoUpload = ({ isOpen, onClose }: PhotoUploadProps) => {
                             </p>
                             <p className="text-sm text-[#7c827c]">ou clique abaixo para selecionar</p>
                             <button
-                                onClick={() => fileInputRef.current?.click()}
+                                onClick={() => {
+                                    const input = fileInputRef.current;
+                                    if (!input) return;
+                                    input.removeAttribute('capture');
+                                    input.click();
+                                }}
                                 className="mt-6 inline-flex items-center justify-center rounded-2xl border border-[#f7cfc0] bg-white px-8 py-3 text-sm font-semibold text-[#c55f4c] shadow-sm hover:bg-[#fff5ef]"
                             >
                                 Escolher imagens

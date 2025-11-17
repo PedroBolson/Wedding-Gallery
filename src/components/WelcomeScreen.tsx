@@ -113,7 +113,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
     }[status];
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle,_#fef5f7,_#fff7ec,_#fefdfb)] px-4 py-10 sm:py-14">
+        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle,#fef5f7,#fff7ec,#fefdfb)] px-4 py-10 sm:py-14">
             <div className="absolute inset-0 overflow-hidden">
                 <motion.div
                     className="absolute -top-20 -right-10 h-64 w-64 rounded-full bg-[#ffd8c5] opacity-60 blur-3xl"
@@ -129,7 +129,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
 
             <div className="relative z-10 mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                 <motion.section
-                    className="relative rounded-[32px] border border-white/60 bg-white/80 p-8 shadow-[0_25px_120px_rgba(255,143,119,0.15)] backdrop-blur-xl sm:p-10"
+                    className="relative rounded-4xl border border-white/60 bg-white/80 p-8 shadow-[0_25px_120px_rgba(255,143,119,0.15)] backdrop-blur-xl sm:p-10"
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
@@ -189,7 +189,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                 </motion.section>
 
                 <motion.section
-                    className="relative flex flex-col rounded-[32px] border border-white/70 bg-white p-8 shadow-[0_25px_80px_rgba(84,36,23,0.15)] sm:p-10"
+                    className="relative flex flex-col rounded-4xl border border-white/70 bg-white p-8 shadow-[0_25px_80px_rgba(84,36,23,0.15)] sm:p-10"
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.1 }}
@@ -232,7 +232,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                                 id="nickname"
                                 value={nickname}
                                 onChange={(e) => setNickname(e.target.value)}
-                                placeholder="Família Santos, Grupo das Madrinhas..."
+                                placeholder="Família , Grupo das Madrinhas..."
                                 className="w-full rounded-2xl border border-[#f2d8ce] bg-[#fff9f7] px-5 py-4 text-base text-[#2e322f] outline-none transition-shadow focus:border-[#f48ca3] focus:ring-4 focus:ring-[#f48ca3]/15"
                                 disabled={loading}
                             />

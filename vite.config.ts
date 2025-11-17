@@ -9,7 +9,14 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['Logo casamento_V1.png'],
+      includeAssets: [
+        'Logo casamento_V1.png',
+        'icons/icon-32.png',
+        'icons/icon-48.png',
+        'icons/icon-180.png',
+        'icons/icon-192.png',
+        'icons/icon-512.png'
+      ],
       manifest: {
         name: 'Álbum Marina & Pedro',
         short_name: 'Marina & Pedro',
@@ -58,4 +65,24 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) {
+              return 'firebase';
+            }
+            if (id.includes('framer-motion')) {
+              return 'motion';
+            }
+            if (id.includes('lucide-react')) {
+              return 'icons';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 })

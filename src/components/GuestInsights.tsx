@@ -92,7 +92,7 @@ export const GuestInsights = ({ users, totalPhotos }: GuestInsightsProps) => {
                 </motion.div>
             </div>
 
-            <div className="rounded-[32px] border border-white/70 bg-white/70 p-6 shadow-[0_25px_80px_rgba(84,36,23,0.08)] backdrop-blur-xl">
+            <div className="rounded-4xl border border-white/70 bg-white/70 p-6 shadow-[0_25px_80px_rgba(84,36,23,0.08)] backdrop-blur-xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="text-xl font-serif text-[#2f3430]">Lista de convidados</h3>
                     <div className="flex items-center gap-2 rounded-2xl border border-[#f4dedd] bg-white px-4 py-2">
@@ -121,11 +121,11 @@ export const GuestInsights = ({ users, totalPhotos }: GuestInsightsProps) => {
                                         Último acesso:{' '}
                                         {guest.lastActive
                                             ? guest.lastActive.toLocaleDateString('pt-BR', {
-                                                  day: '2-digit',
-                                                  month: 'short',
-                                                  hour: '2-digit',
-                                                  minute: '2-digit',
-                                              })
+                                                day: '2-digit',
+                                                month: 'short',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })
                                             : '—'}
                                     </p>
                                 </div>
