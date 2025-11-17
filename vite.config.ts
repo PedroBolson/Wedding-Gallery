@@ -21,8 +21,8 @@ export default defineConfig({
         name: 'Álbum Marina & Pedro',
         short_name: 'Marina & Pedro',
         description: 'Álbum de fotos do casamento de Marina e Pedro',
-        theme_color: '#fff5ef',
-        background_color: '#fff5ef',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
