@@ -1,4 +1,10 @@
 export const registerServiceWorker = async () => {
+    // Só registra service worker em produção
+    if (import.meta.env.DEV) {
+        console.log('Service Worker desabilitado em desenvolvimento');
+        return;
+    }
+
     if ('serviceWorker' in navigator) {
         try {
             const registration = await navigator.serviceWorker.register('/sw.js', {
