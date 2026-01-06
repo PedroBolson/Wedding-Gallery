@@ -51,7 +51,7 @@ export class PhotoService {
         userRole: UserRole,
         onProgress: (progress: number) => void
     ): Promise<Photo> {
-        const photoId = crypto.randomUUID();
+        const photoId = self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const fileExtension = file.name.split('.').pop();
         const fileName = `${photoId}.${fileExtension}`;
         const storagePath = `${STORAGE_PATH}/${fileName}`;
@@ -183,10 +183,15 @@ export class PhotoService {
         });
     }
 
-    static async deletePhoto(photoId: string, url: string): Promise<void> {
+    static async deletePhoto(photoId: string, url: string, uploadedBy?: string): Promise<void> {
         const photoRef = ref(storage, url);
         await deleteObject(photoRef);
         await deleteDoc(doc(db, PHOTOS_COLLECTION, photoId));
+
+        // Decrementar o contador de fotos do usuário
+        if (uploadedBy) {
+            await UserService.decrementPhotoCount(uploadedBy);
+        }
     }
 
     static async downloadPhoto(url: string, fileName: string): Promise<void> {

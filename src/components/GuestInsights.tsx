@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Search, UsersRound } from 'lucide-react';
 import type { User } from '../types';
 import { RoleBadge } from './RoleBadge';
+import { UserService } from '../services/userService';
 
 interface GuestInsightsProps {
     users: User[];
@@ -11,6 +12,26 @@ interface GuestInsightsProps {
 
 export const GuestInsights = ({ users, totalPhotos }: GuestInsightsProps) => {
     const [search, setSearch] = useState('');
+    const [, setIsRecalculating] = useState(false);
+
+    // Recalcular contadores na primeira vez que o componente carrega
+    useEffect(() => {
+        const recalculateAll = async () => {
+            if (users.length === 0) return;
+            setIsRecalculating(true);
+            try {
+                await Promise.all(
+                    users.map(user => UserService.recalculatePhotoCount(user.id))
+                );
+            } catch (error) {
+                console.error('Erro ao recalcular contadores:', error);
+            } finally {
+                setIsRecalculating(false);
+            }
+        };
+
+        recalculateAll();
+    }, []); // Executar apenas uma vez no mount
 
     const filteredUsers = useMemo(() => {
         if (!search) return users;

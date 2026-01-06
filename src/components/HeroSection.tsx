@@ -23,18 +23,8 @@ export const HeroSection = ({ onUpload, highlightPhotos }: HeroSectionProps) => 
     const featuredPhoto = highlightPhotos[activeHighlight];
 
     return (
-        <section className="relative mx-auto mt-10 max-w-6xl overflow-hidden rounded-[36px] bg-[radial-gradient(circle_at_top,#fff1ed,#fff7ef,#fdfcfa)] p-8 shadow-[0_20px_120px_rgba(255,143,119,0.2)] sm:p-12">
-            <motion.div
-                className="absolute inset-0"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8 }}
-            >
-                <div className="pointer-events-none absolute -right-12 top-10 h-48 w-48 rounded-full bg-[#ffdcd6] blur-3xl" />
-                <div className="pointer-events-none absolute -left-12 bottom-6 h-56 w-56 rounded-full bg-[#ffe9d1] blur-3xl" />
-            </motion.div>
-
-            <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-stretch">
+        <section className="relative mx-auto mt-10 max-w-6xl overflow-hidden p-8 sm:p-12">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-stretch">
                 <div className="flex-1 space-y-6">
                     <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-[#d06d5b]">
                         <Sparkles className="h-4 w-4" />
@@ -53,9 +43,6 @@ export const HeroSection = ({ onUpload, highlightPhotos }: HeroSectionProps) => 
                         <div className="rounded-2xl border border-white/70 bg-white/60 p-5 backdrop-blur-xl">
                             <div className="flex items-center gap-2 text-[#d06d5b]">
                                 <CalendarDays className="h-5 w-5" />
-                                <span className="text-sm font-semibold uppercase tracking-[0.3em]">
-                                    Data
-                                </span>
                             </div>
                             <p className="mt-2 text-lg font-semibold text-[#2d302d]">
                                 07 de Fevereiro, 2026
@@ -64,9 +51,6 @@ export const HeroSection = ({ onUpload, highlightPhotos }: HeroSectionProps) => 
                         <div className="rounded-2xl border border-white/70 bg-white/60 p-5 backdrop-blur-xl">
                             <div className="flex items-center gap-2 text-[#d06d5b]">
                                 <MapPin className="h-5 w-5" />
-                                <span className="text-sm font-semibold uppercase tracking-[0.3em]">
-                                    Local
-                                </span>
                             </div>
                             <p className="mt-2 text-lg font-semibold text-[#2d302d]">
                                 Nova Petrópolis / RS

@@ -22,12 +22,12 @@ interface WelcomeScreenProps {
 
 const infoCards = [
     {
-        label: 'Data',
+        label: '',
         value: '07 de Fevereiro, 2026',
         icon: CalendarDays,
     },
     {
-        label: 'Local',
+        label: '',
         value: 'Nova Petrópolis / RS',
         icon: MapPin,
     },
@@ -35,7 +35,6 @@ const infoCards = [
 
 export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
     const [name, setName] = useState('');
-    const [nickname, setNickname] = useState('');
     const [rememberDevice, setRememberDevice] = useState(true);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'new' | 'returning' | 'error' | 'suggestion'>(
@@ -70,7 +69,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
         setLoading(true);
         setSuggestions([]);
         try {
-            const { user, isReturning } = await UserService.signInWithName(name, nickname);
+            const { user, isReturning } = await UserService.signInWithName(name);
             completeSignIn(user, isReturning);
         } catch (error) {
             const similarError = error as SimilarUserError;
@@ -92,8 +91,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
         setLoading(true);
         try {
             const authenticatedUser = await UserService.authenticateExistingUser(
-                selectedUser.id,
-                nickname
+                selectedUser.id
             );
             completeSignIn(authenticatedUser, true);
         } catch (error) {
@@ -145,7 +143,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                     <div className="mt-8 grid gap-4 sm:grid-cols-2">
                         {infoCards.map(({ icon: Icon, label, value }) => (
                             <motion.div
-                                key={label}
+                                key={value}
                                 className="flex items-start gap-4 rounded-2xl border border-[#f8d9d1] bg-white/70 p-5"
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -155,9 +153,11 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                                     <Icon className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <p className="text-sm uppercase tracking-[0.2em] text-[#c8775f]">
-                                        {label}
-                                    </p>
+                                    {label && (
+                                        <p className="text-sm uppercase tracking-[0.2em] text-[#c8775f]">
+                                            {label}
+                                        </p>
+                                    )}
                                     <p className="text-lg font-semibold text-[#2e322f]">{value}</p>
                                 </div>
                             </motion.div>
@@ -213,24 +213,10 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                                 id="fullName"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Ex.: Gabriela Lessa"
+                                placeholder="Ex.: Fulano da Silva"
                                 className="w-full rounded-2xl border border-[#f2d8ce] bg-[#fff9f7] px-5 py-4 text-base text-[#2e322f] outline-none transition-shadow focus:border-[#f48ca3] focus:ring-4 focus:ring-[#f48ca3]/15"
                                 disabled={loading}
                                 required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label htmlFor="nickname" className="text-sm font-semibold text-[#5a625a]">
-                                Como prefere aparecer no álbum? <span className="text-[#c25544]">(opcional)</span>
-                            </label>
-                            <input
-                                id="nickname"
-                                value={nickname}
-                                onChange={(e) => setNickname(e.target.value)}
-                                placeholder="Família , Grupo das Madrinhas..."
-                                className="w-full rounded-2xl border border-[#f2d8ce] bg-[#fff9f7] px-5 py-4 text-base text-[#2e322f] outline-none transition-shadow focus:border-[#f48ca3] focus:ring-4 focus:ring-[#f48ca3]/15"
-                                disabled={loading}
                             />
                         </div>
 
@@ -265,11 +251,6 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                                             className="flex items-center justify-between rounded-2xl border border-[#f8d9d1] bg-white px-4 py-2 text-left font-semibold text-[#c25544] hover:bg-[#fff1eb] disabled:opacity-60"
                                         >
                                             <span>{suggestion.name}</span>
-                                            {suggestion.nickname && (
-                                                <span className="text-xs font-normal text-[#a17a70]">
-                                                    {suggestion.nickname}
-                                                </span>
-                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -298,7 +279,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
 
                         <p className="flex items-center gap-2 text-xs text-[#9b9f9b]">
                             <BookmarkCheck className="h-4 w-4" />
-                            Salvamos apenas seu nome e apelido para identificar as fotos.
+                            Salvamos apenas seu nome para identificar as fotos.
                         </p>
                     </form>
                 </motion.section>

@@ -29,7 +29,7 @@ export const Header = ({ onUploadClick, photoCount }: HeaderProps) => {
 
     return (
         <motion.header
-            className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-white/60 shadow-[0_20px_80px_rgba(255,143,119,0.15)]"
+            className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-white/60 shadow-[0_20px_80px_rgba(255,143,119,0.15)]"
             initial={{ y: -80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 110, damping: 18 }}

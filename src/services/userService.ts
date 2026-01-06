@@ -80,10 +80,9 @@ const levenshteinDistance = (a: string, b: string): number => {
 };
 
 export class UserService {
-    static async signInWithName(name: string, nickname?: string): Promise<SignInResult> {
+    static async signInWithName(name: string): Promise<SignInResult> {
         const trimmedName = formatName(name);
         const normalizedName = normalizeString(trimmedName);
-        const trimmedNickname = nickname?.trim();
 
         const existingQuery = query(
             collection(db, USERS_COLLECTION),
@@ -109,21 +108,12 @@ export class UserService {
                 lastActive: serverTimestamp(),
             };
 
-            const shouldUpdateNickname =
-                trimmedNickname &&
-                (!docSnap.data().nickname || docSnap.data().nickname !== trimmedNickname);
-
-            if (shouldUpdateNickname) {
-                updates.nickname = trimmedNickname;
-            }
-
             await updateDoc(docRef, updates);
 
             const mappedUser = mapUserData(docSnap.id, docSnap.data());
             const mergedUser: User = {
                 ...mappedUser,
                 lastActive: new Date(),
-                nickname: shouldUpdateNickname ? trimmedNickname : mappedUser.nickname,
             };
 
             return {
@@ -143,11 +133,11 @@ export class UserService {
             throw suggestionError;
         }
 
-        const userId = crypto.randomUUID();
+        const userId = self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const newUser: User = {
             id: userId,
             name: trimmedName,
-            nickname: trimmedNickname || undefined,
+            nickname: undefined,
             role: DEFAULT_ROLE,
             createdAt: new Date(),
             lastActive: new Date(),
@@ -157,7 +147,7 @@ export class UserService {
 
         await setDoc(doc(db, USERS_COLLECTION, userId), {
             ...newUser,
-            nickname: trimmedNickname || null,
+            nickname: null,
             normalizedName,
             createdAt: serverTimestamp(),
             lastActive: serverTimestamp(),
@@ -205,15 +195,37 @@ export class UserService {
         });
     }
 
-    static async authenticateExistingUser(userId: string, nickname?: string): Promise<User> {
-        const trimmedNickname = nickname?.trim();
+    static async decrementPhotoCount(userId: string): Promise<void> {
+        await updateDoc(doc(db, USERS_COLLECTION, userId), {
+            photoCount: increment(-1),
+        }).catch(() => {
+            /* noop */
+        });
+    }
+
+    static async recalculatePhotoCount(userId: string): Promise<number> {
+        // Buscar fotos reais do usuário
+        const photosQuery = query(
+            collection(db, 'photos'),
+            where('uploadedBy', '==', userId)
+        );
+        const photosSnapshot = await getDocs(photosQuery);
+        const realCount = photosSnapshot.size;
+
+        // Atualizar com o valor correto
+        await updateDoc(doc(db, USERS_COLLECTION, userId), {
+            photoCount: realCount,
+        }).catch(() => {
+            /* noop */
+        });
+
+        return realCount;
+    }
+
+    static async authenticateExistingUser(userId: string): Promise<User> {
         const updates: Record<string, unknown> = {
             lastActive: serverTimestamp(),
         };
-
-        if (trimmedNickname) {
-            updates.nickname = trimmedNickname;
-        }
 
         const userRef = doc(db, USERS_COLLECTION, userId);
         await updateDoc(userRef, updates);

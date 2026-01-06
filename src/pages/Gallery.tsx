@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ImageOff } from 'lucide-react';
+import { Heart, Image, Users, UploadCloud, ImageOff } from 'lucide-react';
 import { Header } from '../components/Header';
 import { HeroSection } from '../components/HeroSection';
 import { PhotoGrid } from '../components/PhotoGrid';
@@ -13,10 +13,12 @@ import { UserService } from '../services/userService';
 import { GuestInsights } from '../components/GuestInsights';
 import type { User } from '../types';
 
+type PageType = 'live' | 'gallery' | 'insights';
+
 export const Gallery = () => {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [guests, setGuests] = useState<User[]>([]);
-    const [activeTab, setActiveTab] = useState<'album' | 'insights'>('album');
+    const [activePage, setActivePage] = useState<PageType>('live');
     const photos = usePhotoStore((state) => state.photos);
     const setPhotos = usePhotoStore((state) => state.setPhotos);
     const user = useUserStore((state) => state.user);
@@ -38,8 +40,20 @@ export const Gallery = () => {
         return () => unsubscribePhotos();
     }, [user, setPhotos]);
 
-    const hasPhotos = photos.length > 0;
     const highlightPhotos = useMemo(() => photos.slice(0, 6), [photos]);
+
+    const navigationItems = useMemo(() => {
+        const items = [
+            { id: 'live' as PageType, label: 'Álbum ao vivo', shortLabel: 'Ao vivo', icon: Heart },
+            { id: 'gallery' as PageType, label: 'Todas as fotos', shortLabel: 'Galeria', icon: Image, count: photos.length },
+        ];
+
+        if (isPrivileged) {
+            items.push({ id: 'insights' as PageType, label: 'Convidados', shortLabel: 'Insights', icon: Users, count: guests.length });
+        }
+
+        return items;
+    }, [isPrivileged, photos.length, guests.length]);
 
     const emptyState = (
         <motion.div
@@ -66,52 +80,121 @@ export const Gallery = () => {
         </motion.div>
     );
 
-    const tabs = useMemo(
-        () => [
-            { id: 'album' as const, label: 'Álbum ao vivo' },
-            { id: 'insights' as const, label: 'Convidados & insights' },
-        ],
-        []
-    );
-
     return (
         <div className="relative min-h-screen bg-[#fffaf6]">
             <FloatingElements />
             <Header onUploadClick={() => setIsUploadOpen(true)} photoCount={photos.length} />
 
-            <main className="relative mx-auto flex max-w-6xl flex-col gap-10 pb-12">
-                <HeroSection
-                    onUpload={() => setIsUploadOpen(true)}
-                    highlightPhotos={highlightPhotos}
-                />
+            {/* Mobile Navigation */}
+            <div className="fixed top-[95px] left-0 right-0 z-45 bg-[#fffaf6]/95 backdrop-blur-xl border-b border-white/50 lg:hidden">
+                <div className="flex justify-center gap-2 p-2.5">
+                    {navigationItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActivePage(item.id)}
+                            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition shrink-0 ${activePage === item.id
+                                ? 'bg-[#ffede6] text-[#c96a59] shadow-sm'
+                                : 'text-[#8b918b] hover:bg-white/50'
+                                }`}
+                        >
+                            <item.icon className="h-4 w-4" />
+                            <span className="text-[11px] sm:text-xs">{item.shortLabel || item.label}</span>
+                            {item.count !== undefined && (
+                                <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] leading-tight">
+                                    {item.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-                {isPrivileged && (
-                    <div className="flex gap-2 self-center rounded-2xl border border-[#f4dedd] bg-white/70 p-1 shadow-inner">
-                        {tabs.map((tab) => (
+            {/* Spacer for fixed nav */}
+            <div className="h-15 lg:hidden" />
+
+            <div className="lg:flex lg:gap-8 lg:px-8 lg:pt-8">
+                {/* Desktop Sidebar Navigation */}
+                <aside className="hidden lg:sticky lg:top-24 lg:block lg:h-[calc(100vh-7rem)] lg:w-64 lg:shrink-0">
+                    <nav className="space-y-2 rounded-3xl border border-white/70 bg-white/70 p-4 backdrop-blur-xl shadow-lg">
+                        {navigationItems.map((item) => (
                             <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${activeTab === tab.id
-                                        ? 'bg-[#ffede6] text-[#c96a59] shadow'
-                                        : 'text-[#8b918b]'
+                                key={item.id}
+                                onClick={() => setActivePage(item.id)}
+                                className={`flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${activePage === item.id
+                                    ? 'bg-[#ffede6] text-[#c96a59] shadow-sm'
+                                    : 'text-[#6a716a] hover:bg-white/70'
                                     }`}
                             >
-                                {tab.label}
+                                <div className="flex items-center gap-3">
+                                    <item.icon className="h-5 w-5" />
+                                    <span>{item.label}</span>
+                                </div>
+                                {item.count !== undefined && (
+                                    <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs">
+                                        {item.count}
+                                    </span>
+                                )}
                             </button>
                         ))}
-                    </div>
-                )}
 
-                {(!isPrivileged || activeTab === 'album') && (
-                    <section className="px-2 sm:px-0">
-                        {hasPhotos ? <PhotoGrid photos={photos} /> : emptyState}
-                    </section>
-                )}
+                        <div className="pt-4">
+                            <motion.button
+                                onClick={() => setIsUploadOpen(true)}
+                                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#f7cfc0] bg-white px-4 py-3 text-sm font-semibold text-[#c55f4c] shadow-sm hover:bg-[#fff5ef]"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <UploadCloud className="h-4 w-4" />
+                                Enviar foto
+                            </motion.button>
+                        </div>
+                    </nav>
+                </aside>
 
-                {isPrivileged && activeTab === 'insights' && (
-                    <GuestInsights users={guests} totalPhotos={photos.length} />
-                )}
-            </main>
+                {/* Main Content */}
+                <main className="flex-1 pb-12">
+                    {activePage === 'live' && (
+                        <motion.div
+                            key="live"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ duration: 0.3 }}
+                            className="px-4 lg:px-0"
+                        >
+                            <HeroSection
+                                onUpload={() => setIsUploadOpen(true)}
+                                highlightPhotos={highlightPhotos}
+                            />
+                        </motion.div>
+                    )}
+
+                    {activePage === 'gallery' && (
+                        <div className="px-4 lg:px-0">
+                            <div className="mb-6">
+                                <h2 className="text-3xl font-serif text-[#2f3430]">Todas as fotos</h2>
+                                <p className="mt-2 text-sm text-[#6a716a]">
+                                    {photos.length} {photos.length === 1 ? 'foto compartilhada' : 'fotos compartilhadas'}
+                                </p>
+                            </div>
+                            {photos.length > 0 ? <PhotoGrid photos={photos} /> : emptyState}
+                        </div>
+                    )}
+
+                    {activePage === 'insights' && isPrivileged && (
+                        <motion.div
+                            key="insights"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ duration: 0.3 }}
+                            className="px-4 lg:px-0"
+                        >
+                            <GuestInsights users={guests} totalPhotos={photos.length} />
+                        </motion.div>
+                    )}
+                </main>
+            </div>
 
             <PhotoUpload isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
         </div>
