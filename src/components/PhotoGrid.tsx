@@ -11,9 +11,10 @@ import type { Photo } from '../types';
 
 interface PhotoGridProps {
     photos: Photo[];
+    viewMode?: 'masonry' | 'grid';
 }
 
-export const PhotoGrid = ({ photos }: PhotoGridProps) => {
+export const PhotoGrid = ({ photos, viewMode = 'masonry' }: PhotoGridProps) => {
     const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const [scrollPosition, setScrollPosition] = useState(0);
     const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
@@ -26,14 +27,21 @@ export const PhotoGrid = ({ photos }: PhotoGridProps) => {
         () =>
             photos.map((photo, index) => ({
                 ...photo,
-                delay: index * 0.1,
+                delay: viewMode === 'grid' ? 0 : (index < 12 ? 0 : (index - 12) * 0.02),
+                priority: index < 12,
             })),
-        [photos]
+        [photos, viewMode]
     );
 
     const handleImageLoad = (photoId: string) => {
         setLoadedImages(prev => new Set(prev).add(photoId));
     };
+
+    // Foto selecionada atualizada do store em tempo real
+    const currentSelectedPhoto = useMemo(() => {
+        if (!selectedPhoto) return null;
+        return photos.find(p => p.id === selectedPhoto.id) || selectedPhoto;
+    }, [selectedPhoto, photos]);
 
     const handleLike = async (photoId: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -112,120 +120,156 @@ export const PhotoGrid = ({ photos }: PhotoGridProps) => {
 
     return (
         <>
-            <div className="columns-1 gap-5 px-4 sm:columns-2 lg:columns-3 xl:columns-4">
-                {groupedPhotos.map((photo) => {
-                    const isLoaded = loadedImages.has(photo.id);
+            {viewMode === 'masonry' ? (
+                /* Layout Masonry - tamanhos variados */
+                <div className="columns-1 gap-5 px-4 sm:columns-2 lg:columns-3 xl:columns-4">
+                    {groupedPhotos.map((photo) => {
+                        const isLoaded = loadedImages.has(photo.id);
 
-                    return (
-                        <div key={photo.id} className="mb-5 break-inside-avoid">
+                        return (
+                            <div key={photo.id} className="mb-5 break-inside-avoid">
+                                <motion.div
+                                    className="group relative cursor-pointer overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_20px_80px_rgba(84,36,23,0.08)] transition-all duration-300 hover:shadow-[0_30px_100px_rgba(84,36,23,0.15)]"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{
+                                        duration: 0.3,
+                                        delay: photo.delay,
+                                    }}
+                                    whileHover={{ y: -4 }}
+                                    onClick={() => setSelectedPhoto(photo)}
+                                >
+                                    <div
+                                        className="relative w-full overflow-hidden rounded-[28px] bg-linear-to-br from-[#f5f5f5] to-[#e8e8e8]"
+                                        style={{
+                                            aspectRatio:
+                                                photo.width && photo.height
+                                                    ? `${photo.width} / ${photo.height}`
+                                                    : '3 / 4',
+                                        }}
+                                    >
+                                        {/* Skeleton loader */}
+                                        {!isLoaded && (
+                                            <div className="absolute inset-0 bg-[#f0f0f0]" />
+                                        )}
+
+                                        <img
+                                            src={photo.url}
+                                            alt={`Foto enviada por ${photo.uploaderName}`}
+                                            className={`h-full w-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                            loading={photo.priority ? 'eager' : 'lazy'}
+                                            fetchPriority={photo.priority ? 'high' : 'auto'}
+                                            onLoad={() => handleImageLoad(photo.id)}
+                                        />
+
+                                        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#0f0d0c]/85 via-transparent to-transparent opacity-100 transition-opacity duration-300 group-hover:opacity-95" />
+                                    </div>
+
+                                    <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 px-5 pb-5 text-white">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold flex items-center gap-2 truncate">
+                                                    <User2 className="h-4 w-4 shrink-0" />
+                                                    <span className="truncate">{photo.uploaderName}</span>
+                                                </p>
+                                                <RoleBadge role={photo.uploaderRole || 'convidado'} size="sm" />
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <motion.button
+                                                    onClick={(e) => handleLike(photo.id, e)}
+                                                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${currentUserId && photo.likedBy.includes(currentUserId)
+                                                        ? 'bg-white/90 text-[#c9584c]'
+                                                        : 'bg-white/30 text-white hover:bg-white/50'
+                                                        }`}
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    <Heart
+                                                        className={`h-4 w-4 ${currentUserId && photo.likedBy.includes(currentUserId)
+                                                            ? 'fill-[#c9584c] text-[#c9584c]'
+                                                            : ''
+                                                            }`}
+                                                    />
+                                                    <span>{photo.likes}</span>
+                                                </motion.button>
+                                                <motion.button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDownload(photo, e);
+                                                    }}
+                                                    className="inline-flex items-center gap-1 rounded-full border border-white/60 bg-white/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/30 backdrop-blur-sm"
+                                                    title="Baixar esta foto"
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                    <span className="hidden sm:inline">Baixar</span>
+                                                </motion.button>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-white/70">
+                                            {format(photo.uploadedAt, "d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                /* Layout Grid - quadrados compactos */
+                <div className="grid grid-cols-3 gap-2 px-4 sm:grid-cols-4 sm:gap-3 lg:grid-cols-5 lg:gap-4">
+                    {groupedPhotos.map((photo) => {
+                        const isLoaded = loadedImages.has(photo.id);
+
+                        return (
                             <motion.div
-                                className="group relative cursor-pointer overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_20px_80px_rgba(84,36,23,0.08)] transition-all duration-300 hover:shadow-[0_30px_100px_rgba(84,36,23,0.15)]"
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true, margin: "100px", amount: 0.3 }}
+                                key={photo.id}
+                                className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl border border-white/60 bg-white shadow-[0_8px_32px_rgba(84,36,23,0.06)]"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
                                 transition={{
-                                    duration: 0.7,
+                                    duration: 0.2,
                                     delay: photo.delay,
-                                    ease: [0.16, 1, 0.3, 1]
                                 }}
-                                whileHover={{ y: -4 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 onClick={() => setSelectedPhoto(photo)}
                             >
-                                <div
-                                    className="relative w-full overflow-hidden rounded-[28px] bg-linear-to-br from-[#f5f5f5] to-[#e8e8e8]"
-                                    style={{
-                                        aspectRatio:
-                                            photo.width && photo.height
-                                                ? `${photo.width} / ${photo.height}`
-                                                : '3 / 4',
-                                    }}
-                                >
-                                    {/* Skeleton loader */}
-                                    {!isLoaded && (
-                                        <motion.div
-                                            className="absolute inset-0 bg-linear-to-r from-[#f0f0f0] via-[#e8e8e8] to-[#f0f0f0]"
-                                            animate={{
-                                                backgroundPosition: ['0% 0%', '100% 0%'],
-                                            }}
-                                            transition={{
-                                                duration: 1.5,
-                                                repeat: Infinity,
-                                                ease: 'linear',
-                                            }}
-                                            style={{
-                                                backgroundSize: '200% 100%',
-                                            }}
-                                        />
-                                    )}
+                                {/* Skeleton loader */}
+                                {!isLoaded && (
+                                    <div className="absolute inset-0 bg-[#f0f0f0]" />
+                                )}
 
-                                    <motion.img
-                                        src={photo.url}
-                                        alt={`Foto enviada por ${photo.uploaderName}`}
-                                        className="h-full w-full object-cover"
-                                        loading="lazy"
-                                        onLoad={() => handleImageLoad(photo.id)}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: isLoaded ? 1 : 0 }}
-                                        transition={{ duration: 0.4, ease: 'easeOut' }}
-                                    />
+                                <img
+                                    src={photo.thumbnailUrl || photo.url}
+                                    alt={`Foto de ${photo.uploaderName}`}
+                                    className={`h-full w-full object-cover transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                    loading="eager"
+                                    fetchPriority="high"
+                                    onLoad={() => handleImageLoad(photo.id)}
+                                />
 
-                                    <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#0f0d0c]/85 via-transparent to-transparent opacity-100 transition-opacity duration-300 group-hover:opacity-95" />
-                                </div>
-
-                                <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 px-5 pb-5 text-white">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold flex items-center gap-2 truncate">
-                                                <User2 className="h-4 w-4 shrink-0" />
-                                                <span className="truncate">{photo.uploaderName}</span>
-                                            </p>
-                                            <RoleBadge role={photo.uploaderRole || 'convidado'} size="sm" />
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <motion.button
-                                                onClick={(e) => handleLike(photo.id, e)}
-                                                className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${currentUserId && photo.likedBy.includes(currentUserId)
-                                                    ? 'bg-white/90 text-[#c9584c]'
-                                                    : 'bg-white/30 text-white hover:bg-white/50'
-                                                    }`}
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <Heart
-                                                    className={`h-4 w-4 ${currentUserId && photo.likedBy.includes(currentUserId)
-                                                        ? 'fill-[#c9584c] text-[#c9584c]'
-                                                        : ''
-                                                        }`}
-                                                />
-                                                <span>{photo.likes}</span>
-                                            </motion.button>
-                                            <motion.button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDownload(photo, e);
-                                                }}
-                                                className="inline-flex items-center gap-1 rounded-full border border-white/60 bg-white/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/30 backdrop-blur-sm"
-                                                title="Baixar esta foto"
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <Download className="h-4 w-4" />
-                                                <span className="hidden sm:inline">Baixar</span>
-                                            </motion.button>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-white/70">
-                                        {format(photo.uploadedAt, "d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                                {/* Overlay com informações no hover */}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 p-2 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
+                                    <p className="text-center text-xs font-semibold text-white line-clamp-2">
+                                        {photo.uploaderName}
                                     </p>
+                                    {photo.likes > 0 && (
+                                        <div className="flex items-center gap-1 text-xs text-white">
+                                            <Heart className="h-3 w-3 fill-white" />
+                                            <span>{photo.likes}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
-                        </div>
-                    );
-                })}
-            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             <AnimatePresence>
-                {selectedPhoto && (
+                {currentSelectedPhoto && (
                     <motion.div
                         className="fixed inset-0 z-500 flex items-center justify-center bg-black/35 p-4 backdrop-blur-xl"
                         initial={{ opacity: 0 }}
@@ -250,61 +294,61 @@ export const PhotoGrid = ({ photos }: PhotoGridProps) => {
                                 <div className="flex flex-wrap items-center justify-between gap-4">
                                     <div>
                                         <p className="text-lg font-semibold text-[#2f3430]">
-                                            {selectedPhoto.uploaderName}
+                                            {currentSelectedPhoto.uploaderName}
                                         </p>
                                         <p className="text-sm text-[#808680]">
-                                            {format(selectedPhoto.uploadedAt, "d 'de' MMMM 'às' HH:mm", {
+                                            {format(currentSelectedPhoto.uploadedAt, "d 'de' MMMM 'às' HH:mm", {
                                                 locale: ptBR,
                                             })}
                                         </p>
                                     </div>
-                                    <RoleBadge role={selectedPhoto.uploaderRole || 'convidado'} />
+                                    <RoleBadge role={currentSelectedPhoto.uploaderRole || 'convidado'} />
                                 </div>
                             </div>
 
                             <div className="flex flex-1 min-h-0 items-center justify-center bg-[#fef9f6] overflow-auto">
                                 <img
-                                    src={selectedPhoto.url}
-                                    alt={selectedPhoto.uploaderName}
+                                    src={currentSelectedPhoto.url}
+                                    alt={currentSelectedPhoto.uploaderName}
                                     className="max-h-full max-w-full object-contain"
                                 />
                             </div>
 
                             <div className="shrink-0 flex flex-wrap items-center justify-between gap-4 bg-white px-4 py-4 sm:px-6 sm:py-5">
                                 <motion.button
-                                    onClick={(e) => handleLike(selectedPhoto.id, e)}
-                                    className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold shadow-inner ${currentUserId && selectedPhoto.likedBy.includes(currentUserId)
+                                    onClick={(e) => handleLike(currentSelectedPhoto.id, e)}
+                                    className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold shadow-inner ${currentUserId && currentSelectedPhoto.likedBy.includes(currentUserId)
                                         ? 'bg-[#fee7e4] text-[#c9584c]'
                                         : 'bg-[#f7f7f7] text-[#2f3430]'
                                         }`}
                                     whileTap={{ scale: 0.97 }}
                                 >
                                     <Heart
-                                        className={`h-5 w-5 ${currentUserId && selectedPhoto.likedBy.includes(currentUserId)
+                                        className={`h-5 w-5 ${currentUserId && currentSelectedPhoto.likedBy.includes(currentUserId)
                                             ? 'fill-[#c9584c] text-[#c9584c]'
                                             : ''
                                             }`}
                                     />
-                                    {selectedPhoto.likes} curtidas
+                                    {currentSelectedPhoto.likes} curtidas
                                 </motion.button>
                                 <div className="flex items-center gap-3">
                                     <motion.button
-                                        onClick={(e) => handleDownload(selectedPhoto, e)}
+                                        onClick={(e) => handleDownload(currentSelectedPhoto, e)}
                                         className="inline-flex items-center gap-2 rounded-2xl border border-[#f7cfc0] bg-white px-5 py-3 text-sm font-semibold text-[#c55f4c] shadow-sm hover:bg-[#fff5ef]"
                                         whileTap={{ scale: 0.97 }}
                                     >
                                         <Download className="h-4 w-4" />
                                         Baixar foto
                                     </motion.button>
-                                    {isPhotoOwner(selectedPhoto) && (
+                                    {isPhotoOwner(currentSelectedPhoto) && (
                                         <motion.button
-                                            onClick={(e) => handleDelete(selectedPhoto, e)}
-                                            disabled={deletingPhotoId === selectedPhoto.id}
+                                            onClick={(e) => handleDelete(currentSelectedPhoto, e)}
+                                            disabled={deletingPhotoId === currentSelectedPhoto.id}
                                             className="inline-flex items-center gap-2 rounded-2xl border border-red-300 bg-white px-5 py-3 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            whileTap={{ scale: deletingPhotoId === selectedPhoto.id ? 1 : 0.97 }}
+                                            whileTap={{ scale: deletingPhotoId === currentSelectedPhoto.id ? 1 : 0.97 }}
                                         >
                                             <Trash2 className="h-4 w-4" />
-                                            {deletingPhotoId === selectedPhoto.id ? 'Deletando...' : 'Deletar'}
+                                            {deletingPhotoId === currentSelectedPhoto.id ? 'Deletando...' : 'Deletar'}
                                         </motion.button>
                                     )}
                                 </div>

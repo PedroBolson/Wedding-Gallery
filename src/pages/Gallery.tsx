@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Image, Users, UploadCloud, ImageOff } from 'lucide-react';
+import { Heart, Image, Users, UploadCloud, ImageOff, LayoutGrid, LayoutList, Filter, X } from 'lucide-react';
 import { Header } from '../components/Header';
 import { HeroSection } from '../components/HeroSection';
 import { PhotoGrid } from '../components/PhotoGrid';
@@ -19,6 +19,10 @@ export const Gallery = () => {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [guests, setGuests] = useState<User[]>([]);
     const [activePage, setActivePage] = useState<PageType>('live');
+    const [viewMode, setViewMode] = useState<'masonry' | 'grid'>('masonry');
+    const [filterPerson, setFilterPerson] = useState<string>('');
+    const [sortBy, setSortBy] = useState<'recent' | 'likes' | 'oldest'>('recent');
+    const [showFilters, setShowFilters] = useState(false);
     const photos = usePhotoStore((state) => state.photos);
     const setPhotos = usePhotoStore((state) => state.setPhotos);
     const user = useUserStore((state) => state.user);
@@ -41,6 +45,37 @@ export const Gallery = () => {
     }, [user, setPhotos]);
 
     const highlightPhotos = useMemo(() => photos.slice(0, 6), [photos]);
+
+    // Pessoas únicas para filtro
+    const uniquePeople = useMemo(() => {
+        const people = new Map<string, string>();
+        photos.forEach(photo => {
+            people.set(photo.uploadedBy, photo.uploaderName);
+        });
+        return Array.from(people.entries()).map(([id, name]) => ({ id, name }));
+    }, [photos]);
+
+    // Fotos filtradas e ordenadas
+    const filteredPhotos = useMemo(() => {
+        let filtered = [...photos];
+
+        // Filtrar por pessoa
+        if (filterPerson) {
+            filtered = filtered.filter(photo => photo.uploadedBy === filterPerson);
+        }
+
+        // Ordenar
+        if (sortBy === 'likes') {
+            filtered.sort((a, b) => b.likes - a.likes);
+        } else if (sortBy === 'oldest') {
+            filtered.sort((a, b) => a.uploadedAt.getTime() - b.uploadedAt.getTime());
+        } else {
+            // recent (padrão)
+            filtered.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+        }
+
+        return filtered;
+    }, [photos, filterPerson, sortBy]);
 
     const navigationItems = useMemo(() => {
         const items = [
@@ -171,13 +206,116 @@ export const Gallery = () => {
 
                     {activePage === 'gallery' && (
                         <div className="px-4 lg:px-0">
-                            <div className="mb-6">
-                                <h2 className="text-3xl font-serif text-[#2f3430]">Todas as fotos</h2>
-                                <p className="mt-2 text-sm text-[#6a716a]">
-                                    {photos.length} {photos.length === 1 ? 'foto compartilhada' : 'fotos compartilhadas'}
-                                </p>
+                            {/* Header com filtros e toggle */}
+                            <div className="mb-6 flex flex-col gap-4">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1">
+                                        <h2 className="text-3xl font-serif text-[#2f3430]">Todas as fotos</h2>
+                                        <p className="mt-2 text-sm text-[#6a716a]">
+                                            {filteredPhotos.length} {filteredPhotos.length === 1 ? 'foto' : 'fotos'}
+                                            {filterPerson && ' filtrada(s)'}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {/* Toggle visualização mobile */}
+                                        <div className="flex items-center gap-1 rounded-xl border border-white/70 bg-white/80 p-1 lg:hidden">
+                                            <button
+                                                onClick={() => setViewMode('masonry')}
+                                                className={`rounded-lg p-2 transition ${viewMode === 'masonry' ? 'bg-[#ffede6] text-[#c96a59]' : 'text-[#8b918b]'}`}
+                                                title="Layout Masonry"
+                                            >
+                                                <LayoutList className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('grid')}
+                                                className={`rounded-lg p-2 transition ${viewMode === 'grid' ? 'bg-[#ffede6] text-[#c96a59]' : 'text-[#8b918b]'}`}
+                                                title="Grade Compacta"
+                                            >
+                                                <LayoutGrid className="h-4 w-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Botão filtros */}
+                                        <button
+                                            onClick={() => setShowFilters(!showFilters)}
+                                            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition ${showFilters || filterPerson || sortBy !== 'recent'
+                                                    ? 'border-[#f7cfc0] bg-[#ffede6] text-[#c96a59]'
+                                                    : 'border-white/70 bg-white/80 text-[#6a716a] hover:bg-white'
+                                                }`}
+                                        >
+                                            <Filter className="h-4 w-4" />
+                                            <span className="hidden sm:inline">Filtros</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Painel de filtros */}
+                                {showFilters && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="overflow-hidden rounded-2xl border border-white/70 bg-white/80 p-4"
+                                    >
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            {/* Filtro por pessoa */}
+                                            <div>
+                                                <label className="mb-2 block text-xs font-semibold text-[#6a716a]">
+                                                    Filtrar por pessoa
+                                                </label>
+                                                <select
+                                                    value={filterPerson}
+                                                    onChange={(e) => setFilterPerson(e.target.value)}
+                                                    className="w-full rounded-xl border border-[#f2d8ce] bg-white px-3 py-2 text-sm text-[#2f3430] outline-none focus:border-[#f48ca3] focus:ring-2 focus:ring-[#f48ca3]/15"
+                                                >
+                                                    <option value="">Todas as pessoas</option>
+                                                    {uniquePeople.map(person => (
+                                                        <option key={person.id} value={person.id}>
+                                                            {person.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {/* Ordenar por */}
+                                            <div>
+                                                <label className="mb-2 block text-xs font-semibold text-[#6a716a]">
+                                                    Ordenar por
+                                                </label>
+                                                <select
+                                                    value={sortBy}
+                                                    onChange={(e) => setSortBy(e.target.value as any)}
+                                                    className="w-full rounded-xl border border-[#f2d8ce] bg-white px-3 py-2 text-sm text-[#2f3430] outline-none focus:border-[#f48ca3] focus:ring-2 focus:ring-[#f48ca3]/15"
+                                                >
+                                                    <option value="recent">Mais recentes</option>
+                                                    <option value="oldest">Mais antigas</option>
+                                                    <option value="likes">Mais curtidas</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Limpar filtros */}
+                                        {(filterPerson || sortBy !== 'recent') && (
+                                            <button
+                                                onClick={() => {
+                                                    setFilterPerson('');
+                                                    setSortBy('recent');
+                                                }}
+                                                className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#c55f4c] hover:text-[#a84639]"
+                                            >
+                                                <X className="h-3 w-3" />
+                                                Limpar filtros
+                                            </button>
+                                        )}
+                                    </motion.div>
+                                )}
                             </div>
-                            {photos.length > 0 ? <PhotoGrid photos={photos} /> : emptyState}
+
+                            {filteredPhotos.length > 0 ? (
+                                <PhotoGrid photos={filteredPhotos} viewMode={viewMode} />
+                            ) : (
+                                emptyState
+                            )}
                         </div>
                     )}
 

@@ -263,7 +263,7 @@ export class UserService {
 
                 // Verifica se é uma palavra do nome completo (ex: "Pedro" ou "Bolson" em "Pedro Bolson")
                 const words = normalized.split(' ');
-                if (words.some(word => word === normalizedName || normalizedName === word)) {
+                if (words.some((word: string) => word === normalizedName || normalizedName === word)) {
                     return true;
                 }
 
