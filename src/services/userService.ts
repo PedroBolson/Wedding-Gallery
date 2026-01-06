@@ -80,7 +80,7 @@ const levenshteinDistance = (a: string, b: string): number => {
 };
 
 export class UserService {
-    static async signInWithName(name: string): Promise<SignInResult> {
+    static async signInWithName(name: string, forceCreate = false): Promise<SignInResult> {
         const trimmedName = formatName(name);
         const normalizedName = normalizeString(trimmedName);
 
@@ -122,15 +122,18 @@ export class UserService {
             };
         }
 
-        const similarUsers = await this.findSimilarUsers(normalizedName);
+        // Só busca similares se não forçou criação
+        if (!forceCreate) {
+            const similarUsers = await this.findSimilarUsers(normalizedName);
 
-        if (similarUsers.length > 0) {
-            const suggestionError: SimilarUserError = new Error(
-                'Encontramos registros parecidos com este nome'
-            ) as SimilarUserError;
-            suggestionError.code = 'existing-user-suggestion';
-            suggestionError.suggestions = similarUsers;
-            throw suggestionError;
+            if (similarUsers.length > 0) {
+                const suggestionError: SimilarUserError = new Error(
+                    'Encontramos registros parecidos com este nome'
+                ) as SimilarUserError;
+                suggestionError.code = 'existing-user-suggestion';
+                suggestionError.suggestions = similarUsers;
+                throw suggestionError;
+            }
         }
 
         const userId = self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -239,7 +242,7 @@ export class UserService {
     }
 
     private static async findSimilarUsers(normalizedName: string): Promise<User[]> {
-        if (normalizedName.length < 4) {
+        if (normalizedName.length < 3) {
             return [];
         }
 
@@ -252,11 +255,24 @@ export class UserService {
             }))
             .filter(({ normalized }) => {
                 if (normalized === normalizedName) return false;
+
+                // Verifica se é substring (ex: "Pedro" está em "Pedro Bolson")
+                if (normalized.includes(normalizedName) || normalizedName.includes(normalized)) {
+                    return true;
+                }
+
+                // Verifica se é uma palavra do nome completo (ex: "Pedro" ou "Bolson" em "Pedro Bolson")
+                const words = normalized.split(' ');
+                if (words.some(word => word === normalizedName || normalizedName === word)) {
+                    return true;
+                }
+
+                // Levenshtein para typos pequenos
                 const distance = levenshteinDistance(normalizedName, normalized);
                 if (normalizedName.length <= 6) {
                     return distance === 1;
                 }
-                return distance <= 1 && Math.abs(normalizedName.length - normalized.length) <= 1;
+                return distance <= 2 && Math.abs(normalizedName.length - normalized.length) <= 2;
             })
             .map(({ user }) => user);
     }

@@ -102,6 +102,19 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
         }
     };
 
+    const handleCreateNew = async () => {
+        setLoading(true);
+        try {
+            const { user, isReturning } = await UserService.signInWithName(name, true);
+            completeSignIn(user, isReturning);
+        } catch (error) {
+            console.error('Erro ao criar usuário:', error);
+            addToast('Não foi possível criar o registro. Tente novamente.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const statusMessage = {
         returning: 'Encontramos seu registro. Você já pode acessar o álbum completo.',
         new: 'Prontinho! Seu convite digital foi liberado com sucesso.',
@@ -240,7 +253,7 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
 
                         {suggestions.length > 0 && (
                             <div className="rounded-2xl border border-[#f2d8ce] bg-[#fff5f1] p-4 text-sm text-[#5a625a]">
-                                <p>Encontramos estes registros. Toque no seu nome para retomar:</p>
+                                <p className="font-semibold">Encontramos estes registros. Toque no seu nome:</p>
                                 <div className="mt-3 flex flex-col gap-2">
                                     {suggestions.map((suggestion) => (
                                         <button
@@ -248,11 +261,22 @@ export const WelcomeScreen = ({ onComplete }: WelcomeScreenProps) => {
                                             type="button"
                                             disabled={loading}
                                             onClick={() => handleSuggestionSelect(suggestion)}
-                                            className="flex items-center justify-between rounded-2xl border border-[#f8d9d1] bg-white px-4 py-2 text-left font-semibold text-[#c25544] hover:bg-[#fff1eb] disabled:opacity-60"
+                                            className="flex items-center justify-between rounded-2xl border border-[#f8d9d1] bg-white px-4 py-3 text-left font-semibold text-[#c25544] hover:bg-[#fff1eb] disabled:opacity-60"
                                         >
                                             <span>{suggestion.name}</span>
+                                            <ShieldCheck className="h-4 w-4" />
                                         </button>
                                     ))}
+                                </div>
+                                <div className="mt-3 border-t border-[#f2d8ce] pt-3">
+                                    <button
+                                        type="button"
+                                        disabled={loading}
+                                        onClick={handleCreateNew}
+                                        className="w-full rounded-2xl border border-[#e5c4b9] bg-white px-4 py-3 text-sm font-semibold text-[#8b6f65] hover:bg-[#fffaf8] disabled:opacity-60"
+                                    >
+                                        Não sou nenhum destes, criar novo registro
+                                    </button>
                                 </div>
                             </div>
                         )}
